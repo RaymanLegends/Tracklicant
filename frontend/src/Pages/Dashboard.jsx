@@ -1,6 +1,6 @@
 import React from 'react'
 import {useState, useEffect} from "react";
-import NavBar from "../components/NavBar.jsx"
+import NavBar from "../components/Navbar.jsx"
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
 import axios from 'axios';
 import toast from "react-hot-toast";
