@@ -1,10 +1,10 @@
 import React from 'react'
 import {useState, useEffect} from "react";
-import NavBar from "../components/Navbar.jsx"
+import Navbar from "../components/Navbar.jsx"
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
 import axios from 'axios';
 import toast from "react-hot-toast";
-import Jobcard from "../components/Jobcard.jsx";
+import JobCard from "../components/JobCard.jsx";
 import api from '../lib/axios.js';
 import AppsNotFound from "../components/AppsNotFound.jsx";
 
@@ -37,7 +37,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
-      <NavBar />
+      <Navbar />
 
       {isRateLimited && <RateLimitedUI />}
 
@@ -50,7 +50,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map(job => (
               <div key={job._id}>
-                <Jobcard key={job._id} job={job} setJobs={setJobs}/>
+                <JobCard key={job._id} job={job} setJobs={setJobs}/>
               </div>
             ))}
           </div>
