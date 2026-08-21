@@ -1,9 +1,10 @@
-import express from "express"
+import express from "express";
 import cors from "cors";
 import jobsRoutes from "./routes/jobsRoutes.js";
-import {connectDB} from "./config/db.js";
+import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
 import { rateLimiter } from "./middleware/rateLimiter.js";
+import path from "path";
 
 dotenv.config();
 
@@ -11,25 +12,36 @@ const app = express();
 
 const port = process.env.PORT || 5001;
 
-app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"]
-}));
+const __dirname = path.resolve();
 
-//middleware
-app.use(express.json()); //middleware will parse json bodies
+// Middleware
+if (process.env.NODE_ENV !== "production") {
+  app.use(
+    cors({
+      origin: ["http://localhost:5173", "http://localhost:5174"],
+    })
+  );
+}
 
-//our simple custom middleware
-// app.use((req, res, next) => {
-//   console.log(`req method is ${req.method} & req url is ${req.url}`);
-//   next();
-// })
+app.use(express.json()); // Middleware to parse JSON bodies
 
 app.use(rateLimiter);
 
+// API Routes
 app.use("/api/jobs", jobsRoutes);
 
+// Production Static Serving
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  // Express 5 compatible catch-all for SPA client-side routing
+  app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
+  });
+}
+
 connectDB().then(() => {
-  app.listen(5001, () => {     //app.listen tells express to start listening for incoming http requests on a specific port
-    console.log("server started on port: ", port);
+  app.listen(port, () => {
+    console.log("Server started on port:", port);
   });
 });
