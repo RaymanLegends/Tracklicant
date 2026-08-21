@@ -54,7 +54,7 @@ export const updateJobApp = async(req, res) => {
   try {
     const {position, company, dateApplied, appStatus, location, jobUrl, notes} = req.body;
 
-    const updatedJobApp = await jobApp.findByIdAndUpdate(req.params.id, {position, company, dateApplied, appStatus, location, jobUrl, notes}, {new: true});
+    const updatedJobApp = await jobApp.findByIdAndUpdate(req.params.id, {position, company, dateApplied, appStatus, location, jobUrl, notes}, {returnDocument: "after"});
 
     if (!updatedJobApp) {
       return res.status(404).json({message: "Job Application not found"})
