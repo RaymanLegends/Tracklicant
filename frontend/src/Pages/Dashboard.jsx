@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar.jsx"
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
 import axios from 'axios';
 import toast from "react-hot-toast";
-import JobCard from "../components/JobCard.jsx";
+import JobCard from "../components/Jobcard.jsx";
 import api from '../lib/axios.js';
 import AppsNotFound from "../components/AppsNotFound.jsx";
 
