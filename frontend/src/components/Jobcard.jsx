@@ -43,9 +43,35 @@ const JobCard = ({ job, setJobs }) => {
             <h3 className="card-title text-base-content text-lg line-clamp-1">
               {job.company || 'Untitled Position'}
             </h3>
-            <span className="badge badge-neutral badge-sm capitalize shrink-0 p-3">
+            <select
+              className="select select-bordered select-xs font-semibold max-w-xs shrink-0"
+              value={job.appStatus || 'Applied'}
+              onClick={(e) => {
+                e.preventDefault();
+              }}
+              onChange={async (e) => {
+                e.preventDefault();
+                const newStatus = e.target.value;
+                try {
+                  await api.put(`/jobs/${job._id}`, { appStatus: newStatus });
+                  setJobs((prev) =>
+                    prev.map((j) => (j._id === job._id ? { ...j, appStatus: newStatus } : j))
+                  );
+                  toast.success(`Status updated to ${newStatus}`);
+                } catch (err) {
+                  toast.error('Failed to update status');
+                  console.error(err);
+                }
+              }}
+            >
+  <option value="Applied">Applied</option>
+  <option value="Interviewing">Interviewing</option>
+  <option value="Offer">Offer</option>
+  <option value="Rejected">Rejected</option>
+</select>
+            {/* <span className="badge badge-neutral badge-sm capitalize shrink-0 p-3">
               {job.appStatus || 'Applied'}
-            </span>
+            </span> */}
           </div>
 
           {/* Company & Location */}

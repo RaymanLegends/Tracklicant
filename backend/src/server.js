@@ -5,6 +5,7 @@ import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -12,7 +13,8 @@ const app = express();
 
 const port = process.env.PORT || 5001;
 
-const __dirname = path.resolve();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontendDist = path.resolve(__dirname, "../../frontend/dist");
 
 // Middleware
 if (process.env.NODE_ENV !== "production") {
@@ -30,15 +32,13 @@ app.use(rateLimiter);
 // API Routes
 app.use("/api/jobs", jobsRoutes);
 
-// Production Static Serving
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+// Serve the built frontend when running the backend directly.
+app.use(express.static(frontendDist));
 
-  // Express 5 compatible catch-all for SPA client-side routing
-  app.use((req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
-  });
-}
+// Express 5 compatible catch-all for SPA client-side routing
+app.use((req, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
 
 connectDB().then(() => {
   app.listen(port, () => {
