@@ -5,6 +5,8 @@ import Create from "./Pages/CreatePage.jsx"
 import JobDetails from "./Pages/JobDetails.jsx"
 import toast from "react-hot-toast"
 import UnderConstruction from './Pages/UnderConstruction.jsx';
+import ExploreJobs from './Pages/ExploreJobs.jsx';
+import Breweries from "./Pages/Breweries.jsx"
 
 const App = () => {
   return (
@@ -16,6 +18,8 @@ const App = () => {
 
       <Route path = {`/analytics`} element = {<UnderConstruction/>}/>
       <Route path = {`/settings`} element = {<UnderConstruction/>}/>
+      <Route path = {`/explore`} element = {<ExploreJobs/>}/>
+      <Route path = {`/breweries`} element = {<Breweries/>}/>
       </Routes>
     </div>
   )

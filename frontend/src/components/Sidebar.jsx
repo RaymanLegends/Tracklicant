@@ -6,12 +6,16 @@ import {
   SettingsIcon, 
   LogOutIcon, 
   BriefcaseIcon,
+  Compass,
+  Beer,
   PaletteIcon
 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { THEMES } from './themes.js';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
+  const location = useLocation();
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("tracklicant_theme") || "dark";
   });
@@ -25,6 +29,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
   };
+
+  const navLinks = [
+    { name: "Applications", path: "/", icon: LayoutDashboardIcon },
+    { name: "Internship Listings", path: "/explore", icon: Compass },
+    { name: "Analytics & Stats", path: "/analytics", icon: BarChart2Icon },
+    { name: "Breweries", path: "/breweries", icon: Beer },
+    { name: "Settings", path: "/settings", icon: SettingsIcon },
+  ];
 
   return (
     <>
@@ -60,34 +72,32 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </button>
           </div>
 
-          {/* Nav Links */}
+          {/* Dynamic Nav Links */}
           <nav className="flex flex-col gap-1.5">
-            <Link
-              to="/"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-base-300 transition-colors text-base-content/80 hover:text-primary"
-            >
-              <LayoutDashboardIcon className="size-4" />
-              <span>Applications</span>
-            </Link>
+            {navLinks.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
 
-            <Link
-              to="/analytics"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-base-300 transition-colors text-base-content/80 hover:text-primary"
-            >
-              <BarChart2Icon className="size-4" />
-              <span>Analytics & Stats</span>
-            </Link>
-
-            <Link
-              to="/settings"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-base-300 transition-colors text-base-content/80 hover:text-primary"
-            >
-              <SettingsIcon className="size-4" />
-              <span>Settings</span>
-            </Link>
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-base-300 text-primary font-semibold"
+                      : "text-base-content/80 hover:bg-base-300 hover:text-primary"
+                  }`}
+                >
+                  <Icon
+                    className={`size-4.5 transition-colors ${
+                      isActive ? "text-primary" : "text-base-content/60"
+                    }`}
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Theme Selector Section */}
@@ -118,7 +128,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           <button
             onClick={() => {
               setIsOpen(false);
-              // Plug in your auth logout call here later
             }}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-colors cursor-pointer"
           >

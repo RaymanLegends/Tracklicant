@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import jobsRoutes from "./routes/jobsRoutes.js";
+import externalJobsRoutes from "./routes/externalJobRoutes.js";
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
 import { rateLimiter } from "./middleware/rateLimiter.js";
@@ -30,7 +31,8 @@ app.use(express.json()); // Middleware to parse JSON bodies
 app.use(rateLimiter);
 
 // API Routes
-app.use("/api/jobs", jobsRoutes);
+app.use("/api/jobs", jobsRoutes); 
+app.use("/api/external-jobs", externalJobsRoutes);
 
 // Serve the built frontend when running the backend directly.
 app.use(express.static(frontendDist));
