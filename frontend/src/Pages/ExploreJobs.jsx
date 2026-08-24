@@ -123,7 +123,7 @@ const ExploreJobs = () => {
           </div>
         ) : (
           /* Remove legacy 'ag-theme-quartz-dark' class from the container */
-          <div className="w-full h-[600px] rounded-xl overflow-hidden shadow">
+          <div className="w-full h-[calc(100vh-200px)] rounded-xl overflow-hidden shadow">
             <AgGridReact
               theme={myTheme}
               rowData={rowData}
