@@ -2,9 +2,11 @@ import express from "express";
 import cors from "cors";
 import jobsRoutes from "./routes/jobsRoutes.js";
 import externalJobsRoutes from "./routes/externalJobRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
 import { rateLimiter } from "./middleware/rateLimiter.js";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -22,17 +24,20 @@ if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
       origin: ["http://localhost:5173", "http://localhost:5174"],
+      credentials: true,
     })
   );
 }
 
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(cookieParser());
 
 app.use(rateLimiter);
 
 // API Routes
 app.use("/api/jobs", jobsRoutes); 
 app.use("/api/external-jobs", externalJobsRoutes);
+app.use("/api/auth", authRoutes);
 
 // Serve the built frontend when running the backend directly.
 app.use(express.static(frontendDist));

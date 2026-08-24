@@ -12,9 +12,11 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { THEMES } from './themes.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
+  const { authUser, logout } = useAuth();
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("tracklicant_theme") || "dark";
@@ -28,6 +30,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
+  };
+
+  const handleSignOut = async () => {
+    setIsOpen(false);
+    await logout();
   };
 
   const navLinks = [
@@ -123,12 +130,34 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="pt-4 border-t border-base-content/10">
+        {/* Footer Actions: User Profile & Sign Out */}
+        <div className="pt-4 border-t border-base-content/10 space-y-2">
+          {authUser && (
+            <div className="flex items-center gap-3 px-2 py-1.5 mb-1">
+              {authUser.avatar ? (
+                <img
+                  src={authUser.avatar}
+                  alt={authUser.name}
+                  className="size-8 rounded-full ring-1 ring-primary/40 object-cover"
+                />
+              ) : (
+                <div className="size-8 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">
+                  {authUser.name?.charAt(0) || "U"}
+                </div>
+              )}
+              <div className="truncate text-left">
+                <p className="text-xs font-semibold truncate leading-tight text-base-content">
+                  {authUser.name}
+                </p>
+                <p className="text-[11px] text-base-content/50 truncate">
+                  {authUser.email}
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
-            onClick={() => {
-              setIsOpen(false);
-            }}
+            onClick={handleSignOut}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-colors cursor-pointer"
           >
             <LogOutIcon className="size-4" />

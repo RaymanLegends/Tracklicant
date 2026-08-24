@@ -1,18 +1,22 @@
 import express from "express";
-import {getAllJobs, getJobAppById, createJobApp, updateJobApp, deleteJobApp} from "../controllers/jobsControllers.js";
+import {
+  getAllJobs,
+  getJobAppById,
+  createJobApp,
+  updateJobApp,
+  deleteJobApp,
+} from "../controllers/jobsControllers.js";
+import { protectRoute } from "../middleware/protectRoute.js";
 
 const router = express.Router();
 
+// Apply protectRoute to all routes in this file
+router.use(protectRoute);
+
 router.get("/", getAllJobs);
-
 router.get("/:id", getJobAppById);
-
 router.post("/", createJobApp);
-
 router.put("/:id", updateJobApp);
-
 router.delete("/:id", deleteJobApp);
-
-//build api - defines get endpoint /api/jobs, request and response params, res.send sends something back to whoever made the request. this api listens for get requests
 
 export default router;
