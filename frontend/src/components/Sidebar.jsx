@@ -40,6 +40,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const navLinks = [
     { name: "Applications", path: "/", icon: LayoutDashboardIcon },
     { name: "Internship Listings", path: "/explore", icon: Compass },
+    { name: "Interview Prep", path :"/prep", icon: Compass },
     { name: "Analytics & Stats", path: "/analytics", icon: BarChart2Icon },
     { name: "Breweries", path: "/breweries", icon: Beer },
     { name: "Settings", path: "/settings", icon: SettingsIcon },

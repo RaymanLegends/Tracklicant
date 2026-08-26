@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import jobsRoutes from "./routes/jobsRoutes.js";
 import externalJobsRoutes from "./routes/externalJobRoutes.js";
+import neetcodeRoutes from "./routes/neetcodeRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
@@ -37,6 +38,7 @@ app.use(rateLimiter);
 // API Routes
 app.use("/api/jobs", jobsRoutes); 
 app.use("/api/external-jobs", externalJobsRoutes);
+app.use("/api/prep/", neetcodeRoutes);
 app.use("/api/auth", authRoutes);
 
 // Serve the built frontend when running the backend directly.

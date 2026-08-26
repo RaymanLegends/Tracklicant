@@ -11,6 +11,7 @@ import LoginPage from "./Pages/LoginPage.jsx";
 import SignupPage from "./Pages/SignupPage.jsx";
 import SettingsPage from "./Pages/SettingsPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import NeetCodePractice from './Pages/NeetCodePractice.jsx';
 
 const App = () => {
   const { authUser, isCheckingAuth } = useAuth();
@@ -40,6 +41,9 @@ const App = () => {
         {/* Auth Routes */}
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" replace />} />
         <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" replace />} />
+
+        {/* Prep Routes */}
+        <Route path="/prep" element={authUser ? <NeetCodePractice /> : <Navigate to="/prep" replace />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <App />
         <Toaster />
-      </AuthProvider>
+      </AuthProvider> 
     </BrowserRouter>
   </GoogleOAuthProvider>,
 )
