@@ -5,6 +5,7 @@ import Dashboard from "./Pages/Dashboard.jsx";
 import Create from "./Pages/CreatePage.jsx";
 import JobDetails from "./Pages/JobDetails.jsx";
 import UnderConstruction from './Pages/UnderConstruction.jsx';
+import AnalyticsPage from './Pages/AnalyticsPage.jsx';
 import ExploreJobs from './Pages/ExploreJobs.jsx';
 import Breweries from "./Pages/Breweries.jsx";
 import LoginPage from "./Pages/LoginPage.jsx";
@@ -33,7 +34,7 @@ const App = () => {
         {/* Protected App Routes */}
         <Route path="/create" element={authUser ? <Create /> : <Navigate to="/login" replace />} />
         <Route path="/job/:id" element={authUser ? <JobDetails /> : <Navigate to="/login" replace />} />
-        <Route path="/analytics" element={authUser ? <UnderConstruction /> : <Navigate to="/login" replace />} />
+        <Route path="/analytics" element={authUser ? <AnalyticsPage /> : <Navigate to="/login" replace />} />
         <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />} />
         <Route path="/explore" element={authUser ? <ExploreJobs /> : <Navigate to="/login" replace />} />
         <Route path="/breweries" element={authUser ? <Breweries /> : <Navigate to="/login" replace />} />

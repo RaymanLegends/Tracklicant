@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Navbar from "../components/Navbar.jsx";
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
-import JobCard from "../components/Jobcard.jsx";
+import JobCard from "../components/JobCard.jsx";
 import AppsNotFound from "../components/AppsNotFound.jsx";
 import api from "../lib/axios.js";
 import toast from "react-hot-toast";

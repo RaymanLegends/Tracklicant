@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { useNavigate } from "react-router";
 
 // Import modules & theme from ag-grid-community
 import {
@@ -21,9 +22,32 @@ ModuleRegistry.registerModules([AllCommunityModule, ValidationModule]);
 const myTheme = themeQuartz.withPart(colorSchemeDark);
 
 const ExploreJobs = () => {
+
+
   const [loading, setLoading] = useState(true);
   const [rowData, setRowData] = useState([]);
+  const navigate = useNavigate();
 
+  const handleApply = (job) => {
+    try {
+      window.open(job.url, "_blank");
+      const queryParams = new URLSearchParams({
+        company: job.company_name || "",
+        position: job.title || "", 
+        location: Array.isArray(job.locations) ? job.locations.join(", ") : (job.locations || ""),
+        jobUrl: job.url || "",
+        from: "explore",
+      });
+
+      navigate(`/create?${queryParams.toString()}`);
+      toast.success("Applying...")
+    } catch (error) {
+      console.log("error in handleApply exploreJobs.jsx: ", error);
+      toast.error("Error in redirecting");
+    }
+  }
+
+  //regular useeffect
   useEffect(() => {
     const getJobListings = async () => {
       try {
@@ -96,14 +120,12 @@ const ExploreJobs = () => {
           const url = params.data?.url;
           if (!url) return null;
           return (
-            <a
-              href={url}
-              target="_blank"
-              rel="noreferrer"
+            <button
               className="btn btn-ghost btn-xs text-primary underline"
+              onClick={() => handleApply(params.data)}
             >
               Apply ↗
-            </a>
+            </button>
           );
         },
       },

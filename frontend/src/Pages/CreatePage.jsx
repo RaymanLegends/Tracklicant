@@ -1,13 +1,13 @@
 import React from 'react'
 import {useState, useEffect} from "react";
 import { ArrowLeftIcon } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import toast from "react-hot-toast";
 import api from '../lib/axios';
 import axios from 'axios';
 
 const CreatePage = () => {
-
+  
   const [formData, setFormData] = useState({
     position: "",
     company: "",
@@ -18,6 +18,7 @@ const CreatePage = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
 
@@ -33,10 +34,16 @@ const CreatePage = () => {
 
     setLoading(true);
     try{
+      const from = searchParams.get("from");
       await api.post("/jobs", formData);
 
       toast.success("Job application created successfully", {duration: 3000});
-      navigate("/");
+
+      if (from === "explore") {
+        navigate("/explore");
+      } else {
+        navigate("/");
+      }
     }catch (error) {
       if (error.response?.status === 429) {
         toast.error("Slow down!", {duration:3000});
@@ -47,7 +54,26 @@ const CreatePage = () => {
     }finally {
       setLoading(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    const company = searchParams.get("company");
+    const position = searchParams.get("position");
+    const location = searchParams.get("location");
+    const jobUrl = searchParams.get("jobUrl");
+    const from = searchParams.get("from");
+
+    if (company || position || location || jobUrl) {
+      setFormData((prev) => ({
+        ...prev,
+        position: position || "",
+        company: company || "",
+        location: location || "",
+        jobUrl: jobUrl || "",
+      }))
+    }
+
+  }, []);
 
   return (
     <div className="min-h-screen bg-base-200">
