@@ -128,26 +128,37 @@ export const getNewProblem = async(req, res) => {
 
 export const logProblem = async(req, res) => {
   try {
-    const {problemId, title, difficulty, category, leetcodeUrl, completed, notes, confidence} = req.body;
+    const {problemId, title, difficulty, category, leetcodeUrl, completed, notes, confidence, action} = req.body;
 
     if (!problemId) {
-      req.status(400).json({message:"problem id is required"});
+      return res.status(400).json({message:"problem id is required"});
     }
 
     let log = await prep.findOne({
       userId:req.user._id, problemId: problemId,
     });
 
+    const isPracticeCounterUpdate = action === "increment" || action === "decrement";
     const isCompleted = typeof completed === "boolean" ? completed : true;
 
     if (log) {
-      log.completed = isCompleted;
+      if (isPracticeCounterUpdate) {
+        const change = action === "increment" ? 1 : -1;
+        log.timesPracticed = Math.max(0, log.timesPracticed + change);
+        log.completed = log.timesPracticed > 0;
+      } else {
+        // Keep supporting older clients that send the original checkbox payload.
+        log.completed = isCompleted;
+        log.timesPracticed += 1;
+      }
       if (notes !== undefined) log.notes = notes;
       if (confidence !== undefined) log.confidence = confidence;
-      log.timesPracticed += 1;
-      log.lastPracticedAt = new Date();
+      if (action === "increment" || !isPracticeCounterUpdate) {
+        log.lastPracticedAt = new Date();
+      }
       await log.save();
     } else {
+      const initialCount = action === "decrement" ? 0 : 1;
       log = new prep({
         userId: req.user._id,
         problemId,
@@ -155,9 +166,9 @@ export const logProblem = async(req, res) => {
         difficulty,
         category,
         leetcodeUrl,
-        completed: isCompleted,
-        timesPracticed: 1,
-        lastPracticedAt: new Date(),
+        completed: isPracticeCounterUpdate ? initialCount > 0 : isCompleted,
+        timesPracticed: initialCount,
+        lastPracticedAt: initialCount > 0 ? new Date() : null,
         notes: notes || "",
         confidence: confidence || "Medium",
       });

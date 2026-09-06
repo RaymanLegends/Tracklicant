@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Code2Icon,
   SparklesIcon,
@@ -8,11 +8,44 @@ import {
   ExternalLinkIcon,
   DicesIcon,
   LayersIcon,
+  MinusIcon,
+  PlusIcon,
+  ArrowUpDownIcon,
 } from "lucide-react";
 import Navbar from "../components/Navbar.jsx";
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
 import api from "../lib/axios.js";
 import toast from "react-hot-toast";
+
+const PracticeCounter = ({ prob, isUpdating, onChange }) => {
+  const count = prob.timesPracticed || 0;
+
+  return (
+    <div className="join items-center rounded-xl border border-base-content/10 bg-base-200/50" aria-label={`Practice completions for ${prob.title}`}>
+      <button
+        type="button"
+        onClick={() => onChange(prob, "decrement")}
+        disabled={isUpdating || count === 0}
+        className="btn btn-ghost btn-sm join-item px-2.5"
+        aria-label={`Remove one completion for ${prob.title}`}
+      >
+        <MinusIcon className="size-4" />
+      </button>
+      <span className="min-w-10 px-2 text-center font-mono text-sm font-bold" aria-live="polite">
+        {count}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(prob, "increment")}
+        disabled={isUpdating}
+        className="btn btn-primary btn-sm join-item px-2.5"
+        aria-label={`Log one completion for ${prob.title}`}
+      >
+        <PlusIcon className="size-4" />
+      </button>
+    </div>
+  );
+};
 
 const NeetCodePractice = () => {
   const [isRateLimited, setIsRateLimited] = useState(false);
@@ -28,6 +61,8 @@ const NeetCodePractice = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("ALL");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [sortBy, setSortBy] = useState("CATEGORY");
+  const [updatingProblemId, setUpdatingProblemId] = useState(null);
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -75,6 +110,16 @@ const NeetCodePractice = () => {
       selectedCategory === "ALL" || p.category === selectedCategory;
 
     return matchesSearch && matchesDiff && matchesCat;
+  }).sort((a, b) => {
+    if (sortBy === "TITLE") return a.title.localeCompare(b.title);
+    if (sortBy === "DIFFICULTY") {
+      const rank = { Easy: 0, Medium: 1, Hard: 2 };
+      return rank[a.difficulty] - rank[b.difficulty] || a.title.localeCompare(b.title);
+    }
+    if (sortBy === "PRACTICED") {
+      return (b.timesPracticed || 0) - (a.timesPracticed || 0) || a.title.localeCompare(b.title);
+    }
+    return a.category.localeCompare(b.category) || a.title.localeCompare(b.title);
   });
 
   // Roll an Unsolved Problem
@@ -114,8 +159,8 @@ const NeetCodePractice = () => {
     }
   };
 
-  // Toggle Completion / Log a Practice Rep
-  const handleToggleLog = async (prob) => {
+  // Add or remove a completed practice attempt.
+  const handlePracticeCount = async (prob, action) => {
     const targetId = prob.problemId || prob.id;
 
     if (!targetId) {
@@ -125,13 +170,14 @@ const NeetCodePractice = () => {
     }
 
     try {
+      setUpdatingProblemId(targetId);
       const res = await api.post("/prep/log", {
         problemId: targetId,
         title: prob.title,
         difficulty: prob.difficulty,
         category: prob.category,
         leetcodeUrl: prob.leetcodeUrl,
-        completed: !prob.completed,
+        action,
       });
 
       const updated = res.data;
@@ -154,10 +200,12 @@ const NeetCodePractice = () => {
         setRolledProblem((prev) => ({ ...prev, ...updated }));
       }
 
-      toast.success(updated.completed ? "Marked as completed!" : "Marked as incomplete");
+      toast.success(action === "increment" ? "Practice completion logged" : "Practice completion removed");
     } catch (error) {
-      console.error("Error toggling problem log:", error);
+      console.error("Error updating problem log:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setUpdatingProblemId(null);
     }
   };
 
@@ -321,16 +369,11 @@ const NeetCodePractice = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => handleToggleLog(rolledProblem)}
-                className={`btn btn-sm rounded-xl font-semibold ${
-                  rolledProblem.completed
-                    ? "btn-success btn-outline"
-                    : "btn-primary"
-                }`}
-              >
-                {rolledProblem.completed ? "✓ Solved (Log Another Rep)" : "Mark as Solved"}
-              </button>
+              <PracticeCounter
+                prob={rolledProblem}
+                isUpdating={updatingProblemId === (rolledProblem.problemId || rolledProblem.id)}
+                onChange={handlePracticeCount}
+              />
             </div>
           )}
         </div>
@@ -349,18 +392,20 @@ const NeetCodePractice = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 w-full md:w-auto">
-            {/* Category Dropdown */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="select select-bordered select-xs rounded-xl text-xs font-semibold"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === "ALL" ? "All Categories" : cat}
-                </option>
-              ))}
-            </select>
+            <label className="input input-bordered input-xs rounded-xl flex items-center gap-2">
+              <ArrowUpDownIcon className="size-3.5 text-base-content/50" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent text-xs font-semibold outline-none"
+                aria-label="Sort problems"
+              >
+                <option value="CATEGORY">Category</option>
+                <option value="TITLE">Problem name</option>
+                <option value="DIFFICULTY">Difficulty</option>
+                <option value="PRACTICED">Most practiced</option>
+              </select>
+            </label>
 
             {/* Difficulty Tabs */}
             <div className="join bg-base-200/60 p-1 rounded-xl border border-base-content/5 overflow-x-auto">
@@ -388,6 +433,23 @@ const NeetCodePractice = () => {
           </div>
         </div>
 
+        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Problem categories">
+          {categories.map((cat) => {
+            const categoryCount = cat === "ALL" ? problems.length : problems.filter((p) => p.category === cat).length;
+            return (
+              <button
+                type="button"
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`btn btn-sm rounded-xl whitespace-nowrap ${selectedCategory === cat ? "btn-primary" : "btn-ghost bg-base-100 border border-base-content/10"}`}
+              >
+                {cat === "ALL" ? "All categories" : cat}
+                <span className="badge badge-sm badge-ghost">{categoryCount}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* --- 5. CHECKLIST VIEW --- */}
         <div className="bg-base-100 border border-base-content/10 rounded-2xl overflow-hidden shadow-xs">
           {loading ? (
@@ -402,15 +464,14 @@ const NeetCodePractice = () => {
             <div className="divide-y divide-base-content/5">
               {filteredProblems.map((prob) => (
                 <div
-                  key={prob.problemId}
+                  key={prob.problemId || prob.id}
                   className="p-4 flex items-center justify-between hover:bg-base-200/40 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={prob.completed}
-                      onChange={() => handleToggleLog(prob)}
-                      className="checkbox checkbox-sm checkbox-primary rounded-md"
+                  <div className="flex min-w-0 items-center gap-3">
+                    <PracticeCounter
+                      prob={prob}
+                      isUpdating={updatingProblemId === (prob.problemId || prob.id)}
+                      onChange={handlePracticeCount}
                     />
                     <div>
                       <a
@@ -427,7 +488,7 @@ const NeetCodePractice = () => {
                       <div className="flex items-center gap-2 text-[11px] text-base-content/50 mt-0.5">
                         <span>{prob.category}</span>
                         <span>•</span>
-                        <span>Practiced: {prob.timesPracticed || 0} times</span>
+                        <span>{prob.completed ? "Solved" : "Not solved yet"}</span>
                       </div>
                     </div>
                   </div>
