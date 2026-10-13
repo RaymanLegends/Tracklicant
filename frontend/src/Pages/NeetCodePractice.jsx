@@ -16,6 +16,72 @@ import Navbar from "../components/Navbar.jsx";
 import RateLimitedUI from "../components/RateLimitedUI.jsx";
 import api from "../lib/axios.js";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const readSchedule = (key) => {
+  const saved = JSON.parse(localStorage.getItem(key) || "[]");
+  if (!Array.isArray(saved) || saved.some((day) =>
+    !day || typeof day.id !== "string" || typeof day.name !== "string" ||
+    !Array.isArray(day.tasks) || day.tasks.some((task) =>
+      !task || typeof task.id !== "string" || typeof task.text !== "string" || typeof task.done !== "boolean"
+    )
+  )) throw new Error("Invalid schedule");
+  return saved;
+};
+
+const LeetCodeSchedule = ({ storageKey }) => {
+  const [storageError, setStorageError] = useState(() => {
+    try { readSchedule(storageKey); return ""; }
+    catch { return "Your saved schedule could not be loaded. Adding a day will start a new schedule."; }
+  });
+  const [days, setDays] = useState(() => {
+    try { return readSchedule(storageKey); } catch { return []; }
+  });
+
+  const updateDays = (next) => {
+    setDays(next);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      setStorageError("");
+    } catch {
+      setStorageError("Your changes could not be saved. Keep this page open and try again.");
+    }
+  };
+  const updateDay = (id, changes) => updateDays(days.map((day) => day.id === id ? { ...day, ...changes } : day));
+
+  return (
+    <section className="bg-base-100 border border-base-content/10 rounded-2xl p-6 space-y-4" aria-labelledby="schedule-title">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="schedule-title" className="text-lg font-bold font-mono">LeetCode Schedule</h2>
+          <p className="text-xs text-base-content/60">Plan out your Leetcode throughout the week, with new problems and reviews.</p>
+        </div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => updateDays([...days, { id: crypto.randomUUID(), name: "Monday", tasks: [] }])}>Add day</button>
+      </div>
+      {storageError && <p role="alert" className="text-error text-sm">{storageError} <button type="button" className="link" onClick={() => updateDays(days)}>Retry saving</button></p>}
+      {days.length === 0 && <p className="text-sm text-base-content/60">Add a day, then add tasks such as “2 new problems” and “2 reviews”.</p>}
+      <div className="grid gap-4 md:grid-cols-2">
+        {days.map((day) => (
+          <div key={day.id} className="rounded-xl border border-base-content/10 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <input aria-label="Day name" className="input input-bordered input-sm w-full min-w-0" maxLength={80} value={day.name} onChange={(e) => updateDay(day.id, { name: e.target.value })} />
+              <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove day ${day.name}`} onClick={() => updateDays(days.filter((item) => item.id !== day.id))}>Remove</button>
+            </div>
+            <p className="text-xs text-base-content/60" aria-live="polite">{day.tasks.filter((task) => task.done).length} / {day.tasks.length} tasks complete</p>
+            {day.tasks.map((task) => (
+              <div key={task.id} className="flex items-center gap-2">
+                <input type="checkbox" className="checkbox checkbox-primary checkbox-sm" aria-label={`Complete ${task.text || "task"} on ${day.name}`} checked={task.done} onChange={(e) => updateDay(day.id, { tasks: day.tasks.map((item) => item.id === task.id ? { ...item, done: e.target.checked } : item) })} />
+                <input aria-label={`Task on ${day.name}`} placeholder="e.g. 2 new problems" maxLength={200} className={`input input-bordered input-sm w-full min-w-0 ${task.done ? "line-through opacity-60" : ""}`} value={task.text} onChange={(e) => updateDay(day.id, { tasks: day.tasks.map((item) => item.id === task.id ? { ...item, text: e.target.value } : item) })} />
+                <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove ${task.text || "task"} from ${day.name}`} onClick={() => updateDay(day.id, { tasks: day.tasks.filter((item) => item.id !== task.id) })}><MinusIcon className="size-4" /></button>
+              </div>
+            ))}
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => updateDay(day.id, { tasks: [...day.tasks, { id: crypto.randomUUID(), text: "", done: false }] })}>Add task</button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const PracticeCounter = ({ prob, isUpdating, onChange }) => {
   const count = prob.timesPracticed || 0;
@@ -48,6 +114,7 @@ const PracticeCounter = ({ prob, isUpdating, onChange }) => {
 };
 
 const NeetCodePractice = () => {
+  const { authUser } = useAuth();
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +122,7 @@ const NeetCodePractice = () => {
   // Roulette Roller State
   const [rolledProblem, setRolledProblem] = useState(null);
   const [rollerDifficulty, setRollerDifficulty] = useState("");
+  const [rollerCategory, setRollerCategory] = useState("ALL");
   const [isRolling, setIsRolling] = useState(false);
 
   // Filter & Search Controls
@@ -142,21 +210,23 @@ const NeetCodePractice = () => {
   };
 
   // Roll a Completed Problem for Review
-  const handleRollReview = async () => {
-    try {
-      setIsRolling(true);
-      const res = await api.get("/prep/random-review");
-      setRolledProblem(res.data);
-      toast.success("Rolled a review question!");
-    } catch (error) {
-      if (error.response?.status === 404) {
-        toast.error("No completed problems to review yet!");
-      } else {
-        toast.error("Failed to roll review problem");
-      }
-    } finally {
-      setIsRolling(false);
+  const handleRollReview = () => {
+    const candidates = problems.filter((p) => p.completed &&
+      (!rollerDifficulty || p.difficulty === rollerDifficulty) &&
+      (rollerCategory === "ALL" || p.category === rollerCategory));
+    if (!candidates.length) {
+      toast.error("No solved problems match these review filters.");
+      return;
     }
+    setRolledProblem(candidates[Math.floor(Math.random() * candidates.length)]);
+    toast.success("Rolled a review question!");
+  };
+
+  const handleReviewAll = () => {
+    setSearchQuery("");
+    setSelectedCategory(rollerCategory);
+    setSelectedDifficulty(rollerDifficulty || "ALL");
+    document.getElementById("prep-problem-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // Add or remove a completed practice attempt.
@@ -294,22 +364,18 @@ const NeetCodePractice = () => {
 
         {/* --- 3. ROULETTE PRACTICE HERO SECTION --- */}
         <div className="bg-base-100 border border-base-content/10 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold font-mono text-base-content flex items-center gap-2">
-                <DicesIcon className="size-5 text-primary" />
-                Practice Roulette
-              </h2>
-              <p className="text-xs text-base-content/60">
-                Roll an unsolved problem to learn, or roll a completed problem for spaced review.
-              </p>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold font-mono text-base-content flex items-center gap-2">
+              <DicesIcon className="size-5 text-primary" />
+              Practice Roulette
+            </h2>
 
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-nowrap items-center justify-end gap-2">
               <select
                 value={rollerDifficulty}
+                aria-label="Practice difficulty"
                 onChange={(e) => setRollerDifficulty(e.target.value)}
-                className="select select-bordered select-sm rounded-xl text-xs font-semibold"
+                className="select select-bordered select-sm shrink-0 rounded-xl text-xs font-semibold"
               >
                 <option value="">Any Difficulty</option>
                 <option value="Easy">Easy</option>
@@ -317,21 +383,26 @@ const NeetCodePractice = () => {
                 <option value="Hard">Hard</option>
               </select>
 
+              <select aria-label="Review category" value={rollerCategory} onChange={(e) => setRollerCategory(e.target.value)} className="select select-bordered select-sm max-w-full shrink-0 rounded-xl text-xs font-semibold">
+                {categories.map((category) => <option key={category} value={category}>{category === "ALL" ? "All review categories" : category}</option>)}
+              </select>
+
               <button
                 onClick={handleRollNew}
-                disabled={isRolling}
-                className="btn btn-sm btn-primary rounded-xl font-semibold text-xs"
+                disabled={isRolling || loading}
+                className="btn btn-sm btn-primary shrink-0 rounded-xl font-semibold text-xs"
               >
                 🎲 Roll Unsolved
               </button>
 
               <button
                 onClick={handleRollReview}
-                disabled={isRolling}
-                className="btn btn-sm btn-outline btn-secondary rounded-xl font-semibold text-xs"
+                disabled={isRolling || loading}
+                className="btn btn-sm btn-outline btn-secondary shrink-0 rounded-xl font-semibold text-xs"
               >
                 🔁 Review Solved
               </button>
+              <button type="button" onClick={handleReviewAll} disabled={loading} className="btn btn-sm btn-outline shrink-0 rounded-xl">Review all {rollerCategory === "ALL" ? "categories" : "in category"}</button>
             </div>
           </div>
 
@@ -451,7 +522,7 @@ const NeetCodePractice = () => {
         </div>
 
         {/* --- 5. CHECKLIST VIEW --- */}
-        <div className="bg-base-100 border border-base-content/10 rounded-2xl overflow-hidden shadow-xs">
+        <div id="prep-problem-list" className="bg-base-100 border border-base-content/10 rounded-2xl overflow-hidden shadow-xs">
           {loading ? (
             <div className="p-12 text-center text-base-content/40 font-mono text-sm">
               Loading problems...
@@ -509,6 +580,7 @@ const NeetCodePractice = () => {
             </div>
           )}
         </div>
+        {authUser && <LeetCodeSchedule key={authUser._id || authUser.email} storageKey={`tracklicant_prep_schedule_v1:${authUser._id || authUser.email}`} />}
       </main>
     </div>
   );
