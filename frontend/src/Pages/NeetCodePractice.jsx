@@ -49,6 +49,13 @@ const LeetCodeSchedule = ({ storageKey }) => {
   };
   const updateDay = (id, changes) => updateDays(days.map((day) => day.id === id ? { ...day, ...changes } : day));
 
+  const resetWeek = () => updateDays(
+    days.map((day) => ({
+      ...day,
+      tasks: day.tasks.map((task) => ({ ...task, done: false })),
+    }))
+  );
+
   return (
     <section className="bg-base-100 border border-base-content/10 rounded-2xl p-6 space-y-4" aria-labelledby="schedule-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -56,7 +63,12 @@ const LeetCodeSchedule = ({ storageKey }) => {
           <h2 id="schedule-title" className="text-lg font-bold font-mono">LeetCode Schedule</h2>
           <p className="text-xs text-base-content/60">Plan out your Leetcode throughout the week, with new problems and reviews.</p>
         </div>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => updateDays([...days, { id: crypto.randomUUID(), name: "Monday", tasks: [] }])}>Add day</button>
+        <div className="flex items-center gap-4">
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => updateDays([...days, { id: crypto.randomUUID(), name: "Monday", tasks: [] }])}>Add day</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={resetWeek}>
+            Reset Week
+          </button>
+        </div>
       </div>
       {storageError && <p role="alert" className="text-error text-sm">{storageError} <button type="button" className="link" onClick={() => updateDays(days)}>Retry saving</button></p>}
       {days.length === 0 && <p className="text-sm text-base-content/60">Add a day, then add tasks such as “2 new problems” and “2 reviews”.</p>}
@@ -257,11 +269,11 @@ const NeetCodePractice = () => {
         prev.map((item) =>
           (item.problemId || item.id) === targetId
             ? {
-                ...item,
-                completed: updated.completed,
-                timesPracticed: updated.timesPracticed,
-                lastPracticedAt: updated.lastPracticedAt,
-              }
+              ...item,
+              completed: updated.completed,
+              timesPracticed: updated.timesPracticed,
+              lastPracticedAt: updated.lastPracticedAt,
+            }
             : item
         )
       );
@@ -414,13 +426,12 @@ const NeetCodePractice = () => {
                     {rolledProblem.category}
                   </span>
                   <span
-                    className={`badge badge-sm font-bold text-[10px] ${
-                      rolledProblem.difficulty === "Easy"
+                    className={`badge badge-sm font-bold text-[10px] ${rolledProblem.difficulty === "Easy"
                         ? "badge-success badge-outline"
                         : rolledProblem.difficulty === "Medium"
-                        ? "badge-warning badge-outline"
-                        : "badge-error badge-outline"
-                    }`}
+                          ? "badge-warning badge-outline"
+                          : "badge-error badge-outline"
+                      }`}
                   >
                     {rolledProblem.difficulty}
                   </span>
@@ -491,11 +502,10 @@ const NeetCodePractice = () => {
                 <button
                   key={tab.value}
                   onClick={() => setSelectedDifficulty(tab.value)}
-                  className={`join-item btn btn-xs border-0 font-medium ${
-                    selectedDifficulty === tab.value
+                  className={`join-item btn btn-xs border-0 font-medium ${selectedDifficulty === tab.value
                       ? "btn-primary shadow-xs"
                       : "btn-ghost text-base-content/70 hover:bg-base-300/60"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -549,9 +559,8 @@ const NeetCodePractice = () => {
                         href={prob.leetcodeUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className={`text-sm font-semibold hover:underline inline-flex items-center gap-1.5 ${
-                          prob.completed ? "line-through text-base-content/40" : "text-base-content"
-                        }`}
+                        className={`text-sm font-semibold hover:underline inline-flex items-center gap-1.5 ${prob.completed ? "line-through text-base-content/40" : "text-base-content"
+                          }`}
                       >
                         {prob.title}
                         <ExternalLinkIcon className="size-3 opacity-40 hover:opacity-100" />
@@ -565,13 +574,12 @@ const NeetCodePractice = () => {
                   </div>
 
                   <span
-                    className={`badge badge-sm font-bold text-[10px] ${
-                      prob.difficulty === "Easy"
+                    className={`badge badge-sm font-bold text-[10px] ${prob.difficulty === "Easy"
                         ? "badge-success badge-outline"
                         : prob.difficulty === "Medium"
-                        ? "badge-warning badge-outline"
-                        : "badge-error badge-outline"
-                    }`}
+                          ? "badge-warning badge-outline"
+                          : "badge-error badge-outline"
+                      }`}
                   >
                     {prob.difficulty}
                   </span>
